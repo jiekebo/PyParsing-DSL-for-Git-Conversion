@@ -1,12 +1,11 @@
 #!/usr/bin/python	
 """
-DSL for handling conversion of git repository
-By Jacob Salomonsen
-
 BNF for language:
 setup ::= (path)
-command ::= operation | operation path | operation path path
-operation = alpha+
+comment ::= #alpha+
+command ::= operation [path] [path]
+program ::= comment | command
+operation ::= alpha+
 path ::= alpha+
 """
 
@@ -18,9 +17,11 @@ import os
 import shutil
 
 operation = Word ( alphas )
-path = Word ( alphanums + '-/.*' )
+path = Word ( alphanums + '-_/.*' )
 setup = Literal( '(' ) + path + Literal( ')' ) + LineEnd()
 command = operation + LineEnd() | operation + path + LineEnd() | operation + path + path + LineEnd()
+comment = Literal('#') + SkipTo( LineEnd() )
+program = command | comment
 
 root = ""
 
@@ -28,7 +29,7 @@ def main(argv):
 	f = open(argv[0], 'r')
 	string = f.read()
 	setupToken = interpretSetup( setup.parseString( string ) )
-	interpretCommands( command.searchString( string ) )
+	interpretCommands( program.searchString( string ) )
 
 def interpretSetup(setup):
 	global root
